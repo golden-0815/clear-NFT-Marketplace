@@ -139,6 +139,46 @@ describe("NFT + Marketplace", function () {
     ).to.be.revertedWith("Price must be > 0");
   });
 
+  describe("Loyalty System", function () {
+    it("should award points to both buyer and seller after a sale", async () => {
+      await nft.connect(seller).mint(URI);
+      await nft.connect(seller).approve(await marketplace.getAddress(), 1);
+      await marketplace.connect(seller).listItem(await nft.getAddress(), 1, PRICE);
+
+      // Buy the item
+      await marketplace.connect(buyer).buyItem(0, { value: PRICE });
+
+      // Calculate expected points: 1 ETH / 1e17 = 10 points
+      const expectedPoints = 10;
+
+      expect(await marketplace.getLoyaltyPoints(seller.address)).to.equal(expectedPoints);
+      expect(await marketplace.getLoyaltyPoints(buyer.address)).to.equal(expectedPoints);
+    });
+
+    it("should award points after a successful auction", async () => {
+      await nft.connect(seller).mint(URI);
+      await nft.connect(seller).approve(await marketplace.getAddress(), 1);
+
+      const duration = 3600;
+      const bidAmount = ethers.parseEther("2.0");
+
+      await marketplace.connect(seller).startAuction(await nft.getAddress(), 1, PRICE, duration);
+      await marketplace.connect(buyer).bid(0, { value: bidAmount });
+
+      // Fast forward time and end auction
+      await ethers.provider.send("evm_increaseTime", [duration + 1]);
+      await ethers.provider.send("evm_mine");
+
+      await marketplace.endAuction(0);
+
+      // 2.0 ETH / 1e17 = 20 points
+      const expectedPoints = 20;
+
+      expect(await marketplace.getLoyaltyPoints(seller.address)).to.equal(expectedPoints);
+      expect(await marketplace.getLoyaltyPoints(buyer.address)).to.equal(expectedPoints);
+    });
+  });
+
 
   it("should successfully run an auction", async () => {
     await nft.connect(seller).mint(URI);
@@ -173,3 +213,4 @@ describe("NFT + Marketplace", function () {
     expect(finalBalance).to.be.gt(initialBalance);
   });
 });
+
