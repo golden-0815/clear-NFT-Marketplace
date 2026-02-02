@@ -16,11 +16,11 @@ function replaceEnvContractAddresses(marketplaceAddress, nftAddress) {
 }
 
 async function main() {
-  const NFT = await hre.ethers.deployContract("NFT", [], { gasLimit: 5_000_000 });
+  const NFT = await hre.ethers.deployContract("NFT", [], { gasLimit: 2_000_000 });
   const nft = await NFT.waitForDeployment();
   const nftAddress = await nft.getAddress();
 
-  const Marketplace = await hre.ethers.deployContract("Marketplace", [], { gasLimit: 6_000_000 });
+  const Marketplace = await hre.ethers.deployContract("Marketplace", [], { gasLimit: 3_000_000 });
   const marketplace = await Marketplace.waitForDeployment();
   const marketplaceAddress = await marketplace.getAddress();
 
